@@ -15,6 +15,7 @@ router.get('/search', async (req, res) => {
                    q.text_english AS questionEn,
                    q.text_sinhala AS questionSi,
                    q.text_pali AS questionPali,
+                   q.askedCount AS askedCount,
                    collect({
                        id: a.id,
                        text_english: a.text_english,
@@ -23,7 +24,7 @@ router.get('/search', async (req, res) => {
                        source: a.source_reference,
                        confidence: a.confidence
                    }) AS answers
-            ORDER BY q.askedCount DESC
+            ORDER BY askedCount DESC
             LIMIT 10
         `, { text });
 
@@ -44,7 +45,6 @@ router.get('/search', async (req, res) => {
         await session.close();
     }
 });
-
 // Get all questions
 router.get('/', async (req, res) => {
     const session = driver.session();
