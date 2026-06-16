@@ -1,132 +1,103 @@
+// Answers API Routes
 const express = require('express');
 const router = express.Router();
 const { driver } = require('../config/database');
 
-// Get all answers for a question
+/**
+ * GET /api/answers/:questionId
+ * Retrieve all answers for a specific question
+ */
 router.get('/:questionId', async (req, res) => {
+  try {
     const { questionId } = req.params;
     const session = driver.session();
 
-    try {
-        const result = await session.run(`
-            MATCH (q:Question {id: $questionId})-[r:HAS_ANSWER]->(a:Answer)
-            OPTIONAL MATCH (a)-[:SOURCED_FROM]->(s:Sutta)
-            RETURN a.id AS id,
-                   a.text_english AS text_english,
-                   a.text_sinhala AS text_sinhala,
-                   a.text_pali AS text_pali,
-                   a.source_reference AS source_reference,
-                   a.confidence AS confidence,
-                   a.status AS status,
-                   r.relevance AS relevance,
-                   r.order AS order,
-                   s.name_english AS sutta_name
-            ORDER BY r.order ASC
-        `, { questionId });
+    const query = `
+      MATCH (q:Question {id: $questionId})
+      OPTIONAL MATCH (q)-[:HAS_ANSWER]->(a:Answer)
+      RETURN collect(a) as answers
+    `;
 
-        const answers = result.records.map(record => ({
-            id: record.get('id'),
-            text: {
-                english: record.get('text_english'),
-                sinhala: record.get('text_sinhala'),
-                pali: record.get('text_pali')
-            },
-            source_reference: record.get('source_reference'),
-            confidence: record.get('confidence'),
-            status: record.get('status'),
-            relevance: record.get('relevance'),
-            sutta_name: record.get('sutta_name')
-        }));
+    const result = await session.run(query, { questionId });
+    await session.close();
 
-        res.json({ success: true, data: answers });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    } finally {
-        await session.close();
-    }
+    const answers = result.records[0].get('answers').map(a => a.properties);
+    res.json(answers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Add new answer to a question
+/**
+ * POST /api/answers
+ * Create a new answer for a question
+ */
 router.post('/', async (req, res) => {
-    const {
-        question_id,
-        text_english,
-        text_sinhala,
-        text_pali,
-        source_reference,
-        sutta_id,
-        confidence = 0.8,
-        relevance = 0.8
-    } = req.body;
-
+  try {
+    const { questionId, content, source, author } = req.body;
     const session = driver.session();
+    const id = Date.now().toString();
 
-    try {
-        const result = await session.run(`
-            MATCH (q:Question {id: $question_id})
-            MATCH (s:Sutta {id: $sutta_id})
-            CREATE (a:Answer {
-                id: randomUUID(),
-                text_english: $text_english,
-                text_sinhala: $text_sinhala,
-                text_pali: $text_pali,
-                source_reference: $source_reference,
-                confidence: $confidence,
-                createdAt: datetime(),
-                updatedAt: datetime(),
-                status: "draft"
-            })
-            CREATE (q)-[:HAS_ANSWER {
-                relevance: $relevance,
-                order: 1
-            }]->(a)
-            CREATE (a)-[:SOURCED_FROM]->(s)
-            RETURN a.id AS id
-        `, {
-            question_id,
-            text_english,
-            text_sinhala,
-            text_pali,
-            source_reference,
-            sutta_id,
-            confidence,
-            relevance
-        });
+    const query = `
+      MATCH (q:Question {id: $questionId})
+      CREATE (a:Answer {
+        id: $id,
+        content: $content,
+        source: $source,
+        author: $author,
+        createdAt: datetime()
+      })
+      CREATE (q)-[:HAS_ANSWER]->(a)
+      RETURN a
+    `;
 
-        res.json({
-            success: true,
-            message: 'Answer created successfully',
-            id: result.records[0].get('id')
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    } finally {
-        await session.close();
-    }
+    const result = await session.run(query, { 
+      questionId, 
+      id, 
+      content, 
+      source, 
+      author 
+    });
+    await session.close();
+
+    const answer = result.records[0].get('a').properties;
+    res.status(201).json(answer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Update answer status (draft -> verified)
-router.put('/:answerId/status', async (req, res) => {
-    const { answerId } = req.params;
-    const { status } = req.body;
+/**
+ * PUT /api/answers/:id
+ * Update an existing answer
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content, source, author } = req.body;
     const session = driver.session();
 
-    try {
-        await session.run(`
-            MATCH (a:Answer {id: $answerId})
-            SET a.status = $status,
-                a.updatedAt = datetime()
-        `, { answerId, status });
+    const query = `
+      MATCH (a:Answer {id: $id})
+      SET a.content = $content,
+          a.source = $source,
+          a.author = $author,
+          a.updatedAt = datetime()
+      RETURN a
+    `;
 
-        res.json({
-            success: true,
-            message: `Answer status updated to ${status}`
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    } finally {
-        await session.close();
+    const result = await session.run(query, { id, content, source, author });
+    await session.close();
+
+    if (result.records.length === 0) {
+      return res.status(404).json({ error: 'Answer not found' });
     }
+
+    const answer = result.records[0].get('a').properties;
+    res.json(answer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;
