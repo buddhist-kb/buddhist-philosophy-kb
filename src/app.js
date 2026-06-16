@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { verifyConnection } = require('./config/database');
 const questionsRouter = require('./routes/questions');
+const answersRouter = require('./routes/answers');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/questions', questionsRouter);
+app.use('/api/answers', answersRouter);
 
 // Start server
 const start = async () => {
