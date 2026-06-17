@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ත්‍රිපිටක දැනුම් පද්ධතිය | Tipitaka Knowledge Base</title>
+    <style>
+        /* ── Core Reset ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ── Color Variables ── */
+        :root {
+            --gold:        #C8960C;
+            --gold-light:  #F0C040;
+            --gold-pale:   #FDF3DC;
+            --maroon:      #6B1A1A;
+            --maroon-dark: #4A0E0E;
+            --maroon-soft: #8B2A2A;
+            --cream:       #FBF5E6;
+            --text-dark:   #2C1810;
+            --text-soft:   #5C3A1E;
+            --border:      #D4A853;
+        }
+
+        /* ── Body ── */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--cream);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, var(--maroon-dark), var(--maroon));
+            color: var(--gold-light);
+            text-align: center;
+            padding: 24px 16px 20px;
+            border-bottom: 4px solid var(--gold);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        header .dhamma-wheel {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--gold-light);
+        }
+
+        header h2 {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--gold);
+            margin-top: 4px;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            color: #D4A853;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* ── Main Container ── */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px;
+        }
+
+        /* ── Search Section ── */
+        .search-section {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(107,26,26,0.1);
+        }
+
+        .search-section h3 {
+            color: var(--maroon);
+            font-size: 1rem;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ── Language Selector ── */
+        .lang-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .lang-btn {
+            padding: 6px 16px;
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            background: white;
+            color: var(--maroon);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--maroon);
+            color: var(--gold-light);
+            border-color: var(--maroon);
+        }
+
+        /* ── Search Input ── */
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            background: var(--gold-pale);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--maroon);
+        }
+
+        .search-box button {
+            padding: 12px 20px;
+            background: var(--maroon);
+            color: var(--gold-light);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-box button:hover {
+            background: var(--maroon-dark);
+        }
+
+        /* ── Results Section ── */
+        .results-section {
+            margin-top: 8px;
+        }
+
+        .results-title {
+            color: var(--maroon);
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        /* ── Question Card ── */
+        .question-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(107,26,26,0.08);
+        }
+
+        .question-header {
+            background: linear-gradient(135deg, var(--maroon), var(--maroon-soft));
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .question-header:hover {
+            background: linear-gradient(135deg, var(--maroon-dark), var(--maroon));
+        }
+
+        .question-texts {
+            flex: 1;
+        }
+
+        .question-texts .q-sinhala {
+            color: var(--gold-light);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .question-texts .q-english {
+            color: #D4A853;
+            font-size: 0.85rem;
+        }
+
+        .question-texts .q-pali {
+            color: #C4956A;
+            font-size: 0.8rem;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        .toggle-icon {
+            color: var(--gold-light);
+            font-size: 1.2rem;
+            margin-left: 10px;
+            transition: transform 0.3s;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        /* ── Answer Section ── */
+        .answers-container {
+            display: none;
+            padding: 16px;
+            border-top: 2px solid var(--border);
+        }
+
+        .answers-container.open {
+            display: block;
+        }
+
+        .answer-card {
+            background: var(--gold-pale);
+            border-left: 4px solid var(--gold);
+            border-radius: 0 8px 8px 0;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .answer-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .answer-label {
+            color: var(--maroon);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .answer-text-sinhala {
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .answer-text-english {
+            color: var(--text-soft);
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .answer-text-pali {
+            color: var(--maroon-soft);
+            font-size: 0.83rem;
+            font-style: italic;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .answer-source {
+            display: inline-block;
+            background: var(--maroon);
+            color: var(--gold-light);
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .confidence-bar {
+            margin-top: 10px;
+            height: 4px;
+            background: #E0C88A;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--gold-light));
+            border-radius: 2px;
+        }
+
+        /* ── Empty / Loading States ── */
+        .state-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-soft);
+        }
+
+        .state-message .icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .state-message p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ── Browse All Button ── */
+        .browse-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: var(--maroon-dark);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 16px;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+
+        .browse-btn:hover { opacity: 0.9; }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-soft);
+            font-size: 0.8rem;
+            border-top: 2px solid var(--border);
+            margin-top: 40px;
+            background: white;
+        }
+
+        footer .pali-quote {
+            color: var(--maroon);
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+    <span class="dhamma-wheel">☸</span>
+    <h1>ත්‍රිපිටක දැනුම් පද්ධතිය</h1>
+    <h2>Tipitaka Knowledge Base</h2>
+    <p>Vinaya · Sutta · Abhidhamma</p>
+</header>
+
+<main>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <h3>🔍 ප්‍රශ්නය සොයන්න | Search a Question</h3>
+
+        <!-- Language Selector -->
+        <div class="lang-selector">
+            <button class="lang-btn active" onclick="setLang('sinhala', this)">සිංහල</button>
+            <button class="lang-btn" onclick="setLang('english', this)">English</button>
+            <button class="lang-btn" onclick="setLang('pali', this)">Pāli</button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="search-box">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="ප්‍රශ්නය ඇතුළු කරන්න..."
+                onkeypress="handleKeyPress(event)"
+            />
+            <button onclick="searchQuestions()">සොයන්න</button>
+        </div>
+    </div>
+
+    <!-- Browse All Button -->
+    <button class="browse-btn" onclick="loadAllQuestions()">
+        📚 සියලු ප්‍රශ්න බලන්න | Browse All Questions
+    </button>
+
+    <!-- Results -->
+    <div class="results-section" id="resultsSection">
+        <div class="state-message">
+            <span class="icon">☸</span>
+            <p>ප්‍රශ්නයක් සොයන්න හෝ සියලු ප්‍රශ්න බලන්න<br>
+            <em>Search for a question or browse all</em></p>
+        </div>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer>
+    <p class="pali-quote">"Dhammam saranam gacchami"</p>
+    <p>Buddhist Philosophy Knowledge Base · Tipitaka Research System</p>
+</footer>
+
+<script>
+    // ── Configuration ──
+    const API_URL = 'https://buddhist-philosophy-kb-2.onrender.com';
+    let currentLang = 'sinhala';
+
+    // ── Language Selection ──
+    function setLang(lang, btn) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const placeholders = {
+            sinhala: 'ප්‍රශ්නය ඇතුළු කරන්න...',
+            english: 'Enter your question...',
+            pali: 'Pañhaṁ likhatu...'
+        };
+        document.getElementById('searchInput').placeholder = placeholders[lang];
+    }
+
+    // ── Handle Enter Key ──
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') searchQuestions();
+    }
+
+    // ── Search Questions ──
+    async function searchQuestions() {
+        const text = document.getElementById('searchInput').value.trim();
+        if (!text) {
+            loadAllQuestions();
+            return;
+        }
+
+        showLoading();
+
+        try {
+            const response = await fetch(
+                `${API_URL}/api/questions/search?text=${encodeURIComponent(text)}&lang=${currentLang}`
+            );
+            const data = await response.json();
+
+            if (data.success && data.data.length > 0) {
+                renderQuestions(data.data, `"${text}" සඳහා ප්‍රතිඵල | Results for "${text}"`);
+            } else {
+                showEmpty(text);
+            }
+        } catch (error) {
+            showError();
+        }
+    }
+
+    // ── Load All Questions ──
+    async function loadAllQuestions() {
+        showLoading();
+        try {
+            const response = await fetch(`${API_URL}/api/questions`);
+            const data = await response.json();
+
+            if (data.success && data.data.length > 0) {
+                renderQuestions(data.data, `සියලු ප්‍රශ්න | All Questions (${data.data.length})`);
+            } else {
+                showEmpty();
+            }
+        } catch (error) {
+            showError();
+        }
+    }
+
+    // ── Render Questions ──
+    function renderQuestions(questions, title) {
+        const section = document.getElementById('resultsSection');
+
+        let html = `<p class="results-title">${title}</p>`;
+
+        questions.forEach((q, index) => {
+            html += `
+            <div class="question-card">
+                <div class="question-header" onclick="toggleAnswers(${index})">
+                    <div class="question-texts">
+                        <div class="q-sinhala">${q.text.sinhala || ''}</div>
+                        <div class="q-english">${q.text.english || ''}</div>
+                        <div class="q-pali">${q.text.pali || ''}</div>
+                    </div>
+                    <span class="toggle-icon" id="icon-${index}">▼</span>
+                </div>
+                <div class="answers-container" id="answers-${index}">
+                    ${renderAnswers(q.answers || [])}
+                </div>
+            </div>`;
+        });
+
+        section.innerHTML = html;
+    }
+
+    // ── Render Answers ──
+    function renderAnswers(answers) {
+        if (!answers || answers.length === 0) {
+            return '<p style="color:#888; font-size:0.9rem;">පිළිතුරු නොමැත | No answers yet</p>';
+        }
+
+        return answers.map((a, i) => `
+            <div class="answer-card">
+                <div class="answer-label">පිළිතුර ${i + 1} | Answer ${i + 1}</div>
+                <div class="answer-text-sinhala">${a.text_sinhala || ''}</div>
+                <div class="answer-text-english">${a.text_english || ''}</div>
+                <div class="answer-text-pali">${a.text_pali || ''}</div>
+                ${a.source ? `<span class="answer-source">📖 ${a.source}</span>` : ''}
+                ${a.confidence ? `
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width:${a.confidence * 100}%"></div>
+                </div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    // ── Toggle Answers ──
+    function toggleAnswers(index) {
+        const container = document.getElementById(`answers-${index}`);
+        const icon = document.getElementById(`icon-${index}`);
+        container.classList.toggle('open');
+        icon.classList.toggle('open');
+    }
+
+    // ── State Messages ──
+    function showLoading() {
+        document.getElementById('resultsSection').innerHTML = `
+            <div class="state-message">
+                <span class="icon">⏳</span>
+                <p>සොයමින් පවතී...<br><em>Searching...</em></p>
+            </div>`;
+    }
+
+    function showEmpty(text) {
+        document.getElementById('resultsSection').innerHTML = `
+            <div class="state-message">
+                <span class="icon">🔍</span>
+                <p>ප්‍රතිඵල හමු නොවිණි<br>
+                <em>No results found${text ? ` for "${text}"` : ''}</em></p>
+            </div>`;
+    }
+
+    function showError() {
+        document.getElementById('resultsSection').innerHTML = `
+            <div class="state-message">
+                <span class="icon">⚠️</span>
+                <p>සම්බන්ධතා දෝෂයකි<br>
+                <em>Connection error. Please try again.</em></p>
+            </div>`;
+    }
+</script>
+
+</body>
+</html>
