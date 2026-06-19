@@ -486,30 +486,31 @@
 
     // ── Render Questions ──
     function renderQuestions(questions, title) {
-        const section = document.getElementById('resultsSection');
+    const section = document.getElementById('resultsSection');
 
-        let html = `<p class="results-title">${title}</p>`;
+    let html = `<p class="results-title">${title}</p>`;
 
-        questions.forEach((q, index) => {
-            html += `
-            <div class="question-card">
-                <div class="question-header" onclick="toggleAnswers(${index})">
-                    <div class="question-texts">
-                        <div class="q-sinhala">${q.text.sinhala || ''}</div>
-                        <div class="q-english">${q.text.english || ''}</div>
-                        <div class="q-pali">${q.text.pali || ''}</div>
-                    </div>
-                    <span class="toggle-icon" id="icon-${index}">▼</span>
+    questions.forEach((q, index) => {
+        html += `
+        <div class="question-card">
+            <div class="question-header" onclick="toggleAnswers(${index}, '${q.id}')">
+                <div class="question-texts">
+                    <div class="q-sinhala">${q.text.sinhala || ''}</div>
+                    <div class="q-english">${q.text.english || ''}</div>
+                    <div class="q-pali">${q.text.pali || ''}</div>
                 </div>
-                <div class="answers-container" id="answers-${index}">
-                    ${renderAnswers(q.answers || [])}
-                </div>
-            </div>`;
-        });
+                <span class="toggle-icon" id="icon-${index}">▼</span>
+            </div>
+            <div class="answers-container" id="answers-${index}">
+                ${renderAnswers(q.answers || [])}
+                <div id="related-${index}"></div>
+            </div>
+        </div>`;
+      });
 
-        section.innerHTML = html;
+    section.innerHTML = html;
     }
-
+    
     // ── Render Answers ──
     function renderAnswers(answers) {
         if (!answers || answers.length === 0) {
@@ -532,13 +533,47 @@
     }
 
     // ── Toggle Answers ──
-    function toggleAnswers(index) {
-        const container = document.getElementById(`answers-${index}`);
-        const icon = document.getElementById(`icon-${index}`);
-        container.classList.toggle('open');
-        icon.classList.toggle('open');
-    }
+    async function toggleAnswers(index, questionId) {
+    const container = document.getElementById(`answers-${index}`);
+    const icon = document.getElementById(`icon-${index}`);
+    const isOpening = !container.classList.contains('open');
 
+    container.classList.toggle('open');
+    icon.classList.toggle('open');
+
+    if (isOpening && questionId) {
+        loadRelatedQuestions(index, questionId);
+    }
+}
+
+async function loadRelatedQuestions(index, questionId) {
+    const relatedDiv = document.getElementById(`related-${index}`);
+    if (relatedDiv.dataset.loaded === 'true') return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/questions/${questionId}/related`);
+        const data = await res.json();
+
+        if (data.success && data.data.length > 0) {
+            relatedDiv.innerHTML = `
+                <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--border);">
+                    <p style="color:var(--maroon); font-size:0.8rem; font-weight:700; margin-bottom:8px;">
+                        🔗 ආශ්‍රිත ප්‍රශ්න | Related Questions
+                    </p>
+                    ${data.data.map(r => `
+                        <div style="padding:6px 0; font-size:0.85rem; color:var(--text-soft);">
+                            • ${r.text.sinhala || r.text.english}
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+        relatedDiv.dataset.loaded = 'true';
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+    
     // ── State Messages ──
     function showLoading() {
         document.getElementById('resultsSection').innerHTML = `
