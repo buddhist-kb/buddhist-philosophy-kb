@@ -4,6 +4,7 @@ const cors = require('cors');
 const { verifyConnection } = require('./config/database');
 const questionsRouter = require('./routes/questions');
 const answersRouter = require('./routes/answers');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/questions', questionsRouter);
 app.use('/api/answers', answersRouter);
+app.use('/api/admin', adminRouter);
 
 // Start server
 const start = async () => {
