@@ -218,4 +218,57 @@ router.delete('/question/:id', async (req, res) => {
     }
 });
 
+// ── Add an additional answer to an existing question ──
+router.post('/answer-to-question', async (req, res) => {
+    const {
+        question_id,
+        answer_sinhala, answer_english, answer_pali,
+        source_reference, sutta_id,
+        confidence = 0.9
+    } = req.body;
+
+    const session = driver.session();
+    try {
+        // Find current max order for this question's answers
+        const orderResult = await session.run(`
+            MATCH (q:Question {id: $question_id})-[r:HAS_ANSWER]->(a:Answer)
+            RETURN coalesce(max(r.order), 0) AS maxOrder
+        `, { question_id });
+
+        const nextOrder = orderResult.records[0].get('maxOrder').toNumber() + 1;
+
+        const result = await session.run(`
+            MATCH (q:Question {id: $question_id})
+            MATCH (s:Sutta {id: $sutta_id})
+            CREATE (a:Answer {
+                id: randomUUID(),
+                text_sinhala: $answer_sinhala,
+                text_english: $answer_english,
+                text_pali: $answer_pali,
+                source_reference: $source_reference,
+                confidence: $confidence,
+                createdAt: datetime(),
+                updatedAt: datetime(),
+                status: "verified"
+            })
+            CREATE (q)-[:HAS_ANSWER {relevance: $confidence, order: $nextOrder}]->(a)
+            CREATE (a)-[:SOURCED_FROM]->(s)
+            RETURN a.id AS answerId
+        `, {
+            question_id, answer_sinhala, answer_english, answer_pali,
+            source_reference, sutta_id, confidence, nextOrder
+        });
+
+        res.json({
+            success: true,
+            message: 'Answer added to question',
+            answerId: result.records[0].get('answerId')
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        await session.close();
+    }
+});
+
 module.exports = router;
