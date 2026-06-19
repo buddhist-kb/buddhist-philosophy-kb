@@ -3,7 +3,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // List of allowed admin emails
 const ADMIN_EMAILS = [
-    'your-email@gmail.com'  // Replace with your Gmail address
+    'dharmasri2017@gmail.com'  // Replace with your Gmail address
 ];
 
 const verifyGoogleToken = async (req, res, next) => {
