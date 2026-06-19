@@ -135,4 +135,47 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Get related/similar questions
+router.get('/:id/related', async (req, res) => {
+    const { id } = req.params;
+    const session = driver.session();
+
+    try {
+        const result = await session.run(`
+            MATCH (q:Question {id: $id})-[r:SIMILAR_TO]-(related:Question)
+            OPTIONAL MATCH (related)-[:HAS_ANSWER]->(a:Answer)
+            WITH related, r, collect({
+                id: a.id,
+                text_english: a.text_english,
+                source: a.source_reference
+            }) AS answers
+            RETURN related.id AS id,
+                   related.text_english AS text_english,
+                   related.text_sinhala AS text_sinhala,
+                   related.text_pali AS text_pali,
+                   r.strength AS strength,
+                   [a IN answers WHERE a.id IS NOT NULL] AS answers
+            ORDER BY r.strength DESC
+            LIMIT 5
+        `, { id });
+
+        const related = result.records.map(record => ({
+            id: record.get('id'),
+            text: {
+                english: record.get('text_english'),
+                sinhala: record.get('text_sinhala'),
+                pali: record.get('text_pali')
+            },
+            strength: record.get('strength'),
+            answers: record.get('answers')
+        }));
+
+        res.json({ success: true, data: related });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        await session.close();
+    }
+});
+
 module.exports = router;
