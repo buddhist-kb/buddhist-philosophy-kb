@@ -45,6 +45,7 @@ router.get('/search', async (req, res) => {
         await session.close();
     }
 });
+
 // Get all questions
 router.get('/', async (req, res) => {
     const session = driver.session();
@@ -52,12 +53,24 @@ router.get('/', async (req, res) => {
         const result = await session.run(`
             MATCH (q:Question)
             OPTIONAL MATCH (q)-[:RELATES_TO_TOPIC]->(t:Topic)
+            OPTIONAL MATCH (q)-[:HAS_ANSWER]->(a:Answer)
+            WITH q, t,
+                 collect(CASE WHEN a IS NOT NULL THEN {
+                     id: a.id,
+                     text_english: a.text_english,
+                     text_sinhala: a.text_sinhala,
+                     text_pali: a.text_pali,
+                     source: a.source_reference,
+                     confidence: a.confidence
+                 } END) AS answers
             RETURN q.id AS id,
                    q.text_english AS text_english,
                    q.text_sinhala AS text_sinhala,
                    q.text_pali AS text_pali,
                    q.status AS status,
-                   t.name_english AS topic
+                   q.createdAt AS createdAt,
+                   t.name_english AS topic,
+                   [a IN answers WHERE a IS NOT NULL] AS answers
             ORDER BY q.createdAt DESC
         `);
 
@@ -69,7 +82,8 @@ router.get('/', async (req, res) => {
                 pali: record.get('text_pali')
             },
             status: record.get('status'),
-            topic: record.get('topic')
+            topic: record.get('topic'),
+            answers: record.get('answers')
         }));
 
         res.json({ success: true, data: questions });
