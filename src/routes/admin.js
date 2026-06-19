@@ -271,4 +271,46 @@ router.post('/answer-to-question', async (req, res) => {
     }
 });
 
+// ── Link two questions as similar/related ──
+router.post('/link-similar', async (req, res) => {
+    const { question_id_1, question_id_2, strength = 0.8 } = req.body;
+    const session = driver.session();
+
+    try {
+        await session.run(`
+            MATCH (q1:Question {id: $question_id_1})
+            MATCH (q2:Question {id: $question_id_2})
+            MERGE (q1)-[r:SIMILAR_TO]-(q2)
+            SET r.strength = $strength
+        `, { question_id_1, question_id_2, strength });
+
+        res.json({ success: true, message: 'Questions linked successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        await session.close();
+    }
+});
+
+// ── Get all questions (for linking dropdown) ──
+router.get('/all-questions', async (req, res) => {
+    const session = driver.session();
+    try {
+        const result = await session.run(`
+            MATCH (q:Question)
+            RETURN q.id AS id, q.text_english AS text_english
+            ORDER BY q.text_english ASC
+        `);
+        const questions = result.records.map(r => ({
+            id: r.get('id'),
+            text_english: r.get('text_english')
+        }));
+        res.json({ success: true, data: questions });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        await session.close();
+    }
+});
+
 module.exports = router;
